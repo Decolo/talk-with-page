@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>Claude Bridge</h1>
+      <div id="connection-status" class="status-indicator" title="Disconnected"></div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="chat">Chat</button>
+      <button class="tab" data-tab="page">Page</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </nav>
+
+    <!-- Chat Tab -->
+    <div id="chat-panel" class="panel active">
+      <div id="message-list" class="message-list"></div>
+      <div class="input-area">
+        <textarea id="command-input" placeholder="Ask Claude..."></textarea>
+        <div class="input-actions">
+          <button id="send-btn" class="btn-primary">Send</button>
+          <button id="pick-element-btn" class="btn-secondary">Pick</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Tab -->
+    <div id="page-panel" class="panel">
+      <div class="page-actions">
+        <button id="analyze-page-btn" class="btn-block">Analyze Current Page</button>
+        <button id="analyze-selection-btn" class="btn-block">Analyze Selection</button>
+        <button id="pick-element-btn-2" class="btn-block">Pick Element</button>
+      </div>
+      <div id="page-info" class="page-info"></div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="settings-panel" class="panel">
+      <div class="setting-group">
+        <label>
+          Server URL:
+          <input type="text" id="server-url" value="ws://127.0.0.1:9999" readonly>
+        </label>
+      </div>
+      <button id="clear-history-btn" class="btn-block">Clear History</button>
+      <button id="reconnect-btn" class="btn-block">Reconnect</button>
+    </div>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

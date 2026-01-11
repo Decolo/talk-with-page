@@ -1,0 +1,9 @@
+{
+  "name": "@claude-bridge/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/types.ts",
+  "exports": {
+    ".": "./src/types.ts"
+  }
+}

@@ -1,0 +1,20 @@
+/* Element picker overlay styles - will implement later */
+#claude-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2147483647;
+  background: rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+#claude-highlight-box {
+  position: absolute;
+  display: none;
+  border: 2px solid #4ec9b0;
+  background: rgba(78, 201, 176, 0.1);
+  pointer-events: none;
+  z-index: 2147483646;
+}

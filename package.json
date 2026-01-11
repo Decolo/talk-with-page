@@ -1,0 +1,16 @@
+{
+  "name": "claude-code-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "pnpm --filter @claude-bridge/server dev",
+    "dev:extension": "pnpm --filter @claude-bridge/extension dev",
+    "build": "pnpm -r build"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
