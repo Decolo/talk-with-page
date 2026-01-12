@@ -2,6 +2,20 @@
 
 WebSocket server + Chrome extension that connects any web page to Claude AI with file system access.
 
+## 📖 Documentation
+
+Comprehensive documentation is available in the [`/docs`](./docs) directory:
+
+- **[Architecture](./docs/architecture.md)** - System design, patterns, and technical overview
+- **[Components](./docs/components.md)** - Detailed component specifications
+- **[Data Flow](./docs/data-flow.md)** - Message flow and interaction examples
+- **[Development Guide](./docs/development.md)** - Setup, build, testing, and deployment
+
+Quick links:
+- [Quick Start](#quick-start) (below)
+- [Testing Guide](#testing)
+- [Troubleshooting](#troubleshooting)
+
 ## Architecture
 
 ```
