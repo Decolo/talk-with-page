@@ -12,13 +12,17 @@ import type { WebSocket } from "ws";
 export async function runAgent(
   prompt: string,
   requestId: string,
-  ws: WebSocket
-): Promise<void> {
+  ws: WebSocket,
+  sessionId?: string
+): Promise<string | undefined> {
+  let currentSessionId = sessionId;
+
   try {
     const response = query({
       prompt,
       options: {
         allowedTools: ["Bash", "Read", "Write", "Glob", "Edit"],
+        ...(sessionId && { resume: sessionId }),
       }
     });
 
@@ -27,7 +31,8 @@ export async function runAgent(
         case 'system':
           // Initialization and completion messages
           if (message.subtype === 'init') {
-            console.log(`[Agent] Session: ${message.session_id}`);
+            currentSessionId = message.session_id;
+            console.log(`[Agent] Session: ${currentSessionId}`);
           }
           break;
 
@@ -96,6 +101,8 @@ export async function runAgent(
       timestamp: Date.now()
     }));
 
+    return currentSessionId;
+
   } catch (error) {
     console.error('[Agent] Error:', error);
     ws.send(JSON.stringify({
@@ -104,5 +111,6 @@ export async function runAgent(
       content: error instanceof Error ? error.message : 'Unknown error occurred',
       timestamp: Date.now()
     }));
+    return currentSessionId;
   }
 }

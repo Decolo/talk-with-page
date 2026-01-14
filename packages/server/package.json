@@ -15,6 +15,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
+    "@claude-bridge/shared": "workspace:*",
     "ws": "^8.18.0",
     "@anthropic-ai/claude-agent-sdk": "latest",
     "dotenv": "^16.4.0"

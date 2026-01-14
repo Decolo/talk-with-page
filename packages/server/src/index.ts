@@ -15,6 +15,9 @@ console.log(`🌉 Claude Code Bridge running on ws://${HOST}:${PORT}`);
 wss.on("connection", (ws) => {
   console.log('[Server] Client connected');
 
+  // Store session ID per connection for conversation continuity
+  let sessionId: string | undefined;
+
   ws.send(JSON.stringify({
     type: "status",
     requestId: "system",
@@ -46,7 +49,8 @@ wss.on("connection", (ws) => {
         timestamp: Date.now()
       }));
 
-      await runAgent(prompt, message.id, ws);
+      // Pass session ID for continuity, update with returned ID
+      sessionId = await runAgent(prompt, message.id, ws, sessionId);
 
     } catch (error) {
       console.error('[Server] Error:', error);

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { copyFileSync, cpSync, mkdirSync } from 'fs';
 
 export default defineConfig({
   build: {
@@ -18,4 +19,32 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
   },
+  plugins: [
+    {
+      name: 'copy-extension-files',
+      closeBundle() {
+        // Copy manifest.json
+        copyFileSync(
+          resolve(__dirname, 'manifest.json'),
+          resolve(__dirname, 'dist/manifest.json')
+        );
+        // Copy popup html/css
+        copyFileSync(
+          resolve(__dirname, 'popup/popup.html'),
+          resolve(__dirname, 'dist/popup/popup.html')
+        );
+        copyFileSync(
+          resolve(__dirname, 'popup/popup.css'),
+          resolve(__dirname, 'dist/popup/popup.css')
+        );
+        // Copy assets
+        mkdirSync(resolve(__dirname, 'dist/assets'), { recursive: true });
+        cpSync(
+          resolve(__dirname, 'assets'),
+          resolve(__dirname, 'dist/assets'),
+          { recursive: true }
+        );
+      },
+    },
+  ],
 });
