@@ -83,11 +83,18 @@ class PopupController {
     const instruction = this.commandInput.value.trim();
     if (!instruction) return;
 
+    // Get current tab info for context
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
     const message: ClientMessage = {
       type: 'command',
       id: `popup-${Date.now()}`,
       timestamp: Date.now(),
-      payload: { instruction },
+      payload: {
+        instruction,
+        url: tab?.url,
+        title: tab?.title,
+      },
     };
 
     // Add user message to UI immediately

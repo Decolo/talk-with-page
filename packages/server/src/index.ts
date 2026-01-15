@@ -69,10 +69,20 @@ wss.on("connection", (ws) => {
 
 function buildPrompt(message: ClientMessage): string {
   if (message.type === 'command') {
-    const { instruction, context } = message.payload;
-    return context
-      ? `Context: ${context}\n\nUser request: ${instruction}`
-      : instruction || '';
+    const { instruction, context, url, title } = message.payload;
+    const parts: string[] = [];
+
+    if (url || title) {
+      parts.push(`[Page context: ${title || 'Untitled'} - ${url || 'unknown URL'}]`);
+    }
+    if (context) {
+      parts.push(`Context: ${context}`);
+    }
+    if (instruction) {
+      parts.push(`User request: ${instruction}`);
+    }
+
+    return parts.join('\n\n');
   }
 
   if (message.type === 'page_content') {
