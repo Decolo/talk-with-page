@@ -4,11 +4,13 @@ class PopupController {
   private messageList: HTMLElement;
   private commandInput: HTMLTextAreaElement;
   private connectionStatus: HTMLElement;
+  private pageInfo: HTMLElement;
 
   constructor() {
     this.messageList = document.getElementById('message-list')!;
     this.commandInput = document.getElementById('command-input') as HTMLTextAreaElement;
     this.connectionStatus = document.getElementById('connection-status')!;
+    this.pageInfo = document.getElementById('page-info')!;
   }
 
   async init(): Promise<void> {
@@ -43,6 +45,8 @@ class PopupController {
     document.getElementById('pick-element-btn-2')!.addEventListener('click', () => this.activatePicker());
 
     // Page analysis buttons
+    document.getElementById('preview-page-btn')!.addEventListener('click', () => this.previewPage());
+    document.getElementById('preview-raw-btn')!.addEventListener('click', () => this.previewRawHTML());
     document.getElementById('analyze-page-btn')!.addEventListener('click', () => this.analyzePage());
     document.getElementById('analyze-selection-btn')!.addEventListener('click', () => this.analyzeSelection());
 
@@ -103,6 +107,85 @@ class PopupController {
 
     // Send to background
     chrome.runtime.sendMessage({ action: 'sendCommand', payload: message });
+  }
+
+  private async previewPage(): Promise<void> {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab.id) {
+      this.pageInfo.innerHTML = '<p style="color: red;">No active tab found.</p>';
+      return;
+    }
+
+    try {
+      const content = await chrome.tabs.sendMessage(tab.id, { action: 'getPageContent' });
+
+      if (content.error) {
+        this.pageInfo.innerHTML = `<p style="color: red;">Error: ${content.error}</p>`;
+        return;
+      }
+
+      // Display parsed content in page-info div
+      const preview = `
+<strong>URL:</strong> ${content.url}
+<strong>Title:</strong> ${content.title}
+<strong>Site:</strong> ${content.siteName || 'N/A'}
+<strong>Author:</strong> ${content.byline || 'N/A'}
+<strong>Length:</strong> ${content.length} chars
+<strong>Excerpt:</strong> ${content.excerpt || 'N/A'}
+
+<strong>Content Preview (first 2000 chars):</strong>
+${content.content?.substring(0, 2000) || 'No content extracted'}${content.content?.length > 2000 ? '...' : ''}
+      `.trim();
+
+      this.pageInfo.innerHTML = `<pre style="white-space: pre-wrap; font-size: 11px; max-height: 300px; overflow-y: auto;">${preview}</pre>`;
+
+      // Also log to console for easier inspection
+      console.log('[Preview] Parsed page content:', content);
+    } catch (error) {
+      console.error('[Preview] Error:', error);
+      this.pageInfo.innerHTML = `<p style="color: red;">Failed to get page content. Error: ${error}<br><br>Please refresh the page and try again.</p>`;
+    }
+  }
+
+  private async previewRawHTML(): Promise<void> {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab.id) {
+      this.pageInfo.innerHTML = '<p style="color: red;">No active tab found.</p>';
+      return;
+    }
+
+    try {
+      const content = await chrome.tabs.sendMessage(tab.id, { action: 'getRawHTML' });
+
+      if (content.error) {
+        this.pageInfo.innerHTML = `<p style="color: red;">Error: ${content.error}</p>`;
+        return;
+      }
+
+      // Escape HTML for display
+      const escapedHTML = content.html
+        .substring(0, 5000)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      const preview = `
+<strong>URL:</strong> ${content.url}
+<strong>Title:</strong> ${content.title}
+<strong>Total Length:</strong> ${content.length} chars
+
+<strong>Raw HTML (first 5000 chars):</strong>
+${escapedHTML}${content.length > 5000 ? '...' : ''}
+      `.trim();
+
+      this.pageInfo.innerHTML = `<pre style="white-space: pre-wrap; font-size: 10px; max-height: 300px; overflow-y: auto;">${preview}</pre>`;
+
+      // Log full HTML to console
+      console.log('[Preview] Raw HTML:', content);
+    } catch (error) {
+      console.error('[Preview] Error:', error);
+      this.pageInfo.innerHTML = `<p style="color: red;">Failed to get raw HTML. Error: ${error}<br><br>Please refresh the page and try again.</p>`;
+    }
   }
 
   private async analyzePage(): Promise<void> {
