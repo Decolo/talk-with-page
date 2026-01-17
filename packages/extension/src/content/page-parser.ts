@@ -10,6 +10,46 @@ export interface ParsedPage {
   siteName: string | null;
   length: number;
   selectedText: string;
+  images: string[];
+  videos: string[];
+}
+
+/**
+ * Extract all image and video URLs from the page
+ */
+function extractMediaUrls(): { images: string[]; videos: string[] } {
+  const images: string[] = [];
+  const videos: string[] = [];
+
+  // Extract image URLs
+  document.querySelectorAll('img[src]').forEach((img) => {
+    const src = (img as HTMLImageElement).src;
+    if (src && !src.startsWith('data:')) {
+      images.push(src);
+    }
+  });
+
+  // Extract video URLs (video elements and sources)
+  document.querySelectorAll('video[src], video source[src]').forEach((el) => {
+    const src = (el as HTMLVideoElement | HTMLSourceElement).src;
+    if (src) {
+      videos.push(src);
+    }
+  });
+
+  // Extract iframe embeds (YouTube, Vimeo, etc.)
+  document.querySelectorAll('iframe[src]').forEach((iframe) => {
+    const src = (iframe as HTMLIFrameElement).src;
+    if (src && (src.includes('youtube') || src.includes('vimeo') || src.includes('player'))) {
+      videos.push(src);
+    }
+  });
+
+  // Deduplicate
+  return {
+    images: [...new Set(images)],
+    videos: [...new Set(videos)],
+  };
 }
 
 /**
@@ -18,6 +58,7 @@ export interface ParsedPage {
  */
 export function parsePage(): ParsedPage {
   const selectedText = window.getSelection()?.toString() || '';
+  const media = extractMediaUrls();
 
   try {
     // Clone the document to avoid modifying the original
@@ -38,6 +79,8 @@ export function parsePage(): ParsedPage {
         siteName: article.siteName,
         length: article.length,
         selectedText,
+        images: media.images,
+        videos: media.videos,
       };
     }
   } catch (error) {
@@ -56,5 +99,7 @@ export function parsePage(): ParsedPage {
     siteName: null,
     length: document.body.innerText.length,
     selectedText,
+    images: media.images,
+    videos: media.videos,
   };
 }

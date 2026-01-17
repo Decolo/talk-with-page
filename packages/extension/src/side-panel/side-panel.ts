@@ -1,6 +1,6 @@
 import type { ClientMessage, StreamMessage } from '@claude-bridge/shared';
 
-class PopupController {
+class SidePanelController {
   private messageList: HTMLElement;
   private commandInput: HTMLTextAreaElement;
   private connectionStatus: HTMLElement;
@@ -84,9 +84,9 @@ class PopupController {
     const instruction = this.commandInput.value.trim();
     if (!instruction) return;
 
-    // Check for /init command
-    if (instruction.toLowerCase() === '/init') {
-      await this.handleInitCommand();
+    // Check for /loadpage command (load page context)
+    if (instruction.toLowerCase() === '/loadpage') {
+      await this.handleLoadPageCommand();
       return;
     }
 
@@ -95,7 +95,7 @@ class PopupController {
 
     const message: ClientMessage = {
       type: 'command',
-      id: `popup-${Date.now()}`,
+      id: `sidepanel-${Date.now()}`,
       timestamp: Date.now(),
       payload: {
         instruction,
@@ -112,16 +112,16 @@ class PopupController {
     chrome.runtime.sendMessage({ action: 'sendCommand', payload: message });
   }
 
-  private async handleInitCommand(): Promise<void> {
+  private async handleLoadPageCommand(): Promise<void> {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab.id) {
       this.addMessage('error', 'No active tab found.');
       return;
     }
 
-    this.addMessage('user', '/init');
+    this.addMessage('user', '/loadpage');
     this.commandInput.value = '';
-    this.addMessage('status', 'Initializing page context...');
+    this.addMessage('status', 'Loading page context...');
 
     try {
       const pageData = await chrome.tabs.sendMessage(tab.id, { action: 'getFullPageData' });
@@ -132,8 +132,8 @@ class PopupController {
       }
 
       const message: ClientMessage = {
-        type: 'init',
-        id: `init-${Date.now()}`,
+        type: 'loadpage',
+        id: `loadpage-${Date.now()}`,
         timestamp: Date.now(),
         payload: {
           url: pageData.url,
@@ -145,9 +145,9 @@ class PopupController {
       };
 
       chrome.runtime.sendMessage({ action: 'sendCommand', payload: message });
-      console.log('[Popup] Sent init command with', pageData.images?.length || 0, 'images,', pageData.videos?.length || 0, 'videos');
+      console.log('[SidePanel] Sent init command with', pageData.images?.length || 0, 'images,', pageData.videos?.length || 0, 'videos');
     } catch (error) {
-      console.error('[Popup] Init error:', error);
+      console.error('[SidePanel] Init error:', error);
       this.addMessage('error', 'Failed to initialize page context. Please refresh the page.');
     }
   }
@@ -237,7 +237,7 @@ ${escapedHTML}${content.length > 5000 ? '...' : ''}
 
     try {
       await chrome.tabs.sendMessage(tab.id, { action: 'activatePicker' });
-      window.close();
+      // Side panel stays open, no window.close()
     } catch (error) {
       this.addMessage('error', 'Failed to activate picker. Please refresh the page.');
     }
@@ -322,5 +322,5 @@ ${escapedHTML}${content.length > 5000 ? '...' : ''}
 
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', () => {
-  new PopupController().init();
+  new SidePanelController().init();
 });

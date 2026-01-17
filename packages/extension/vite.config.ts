@@ -10,6 +10,7 @@ export default defineConfig({
         'content/content-script': resolve(__dirname, 'src/content/content-script.ts'),
         'popup/popup': resolve(__dirname, 'src/popup/popup.ts'),
         'offscreen/offscreen': resolve(__dirname, 'src/offscreen/offscreen.ts'),
+        'side-panel/side-panel': resolve(__dirname, 'src/side-panel/side-panel.ts'),
       },
       output: {
         entryFileNames: '[name].js',
@@ -37,6 +38,16 @@ export default defineConfig({
         copyFileSync(
           resolve(__dirname, 'popup/popup.css'),
           resolve(__dirname, 'dist/popup/popup.css')
+        );
+        // Copy side-panel html/css
+        mkdirSync(resolve(__dirname, 'dist/side-panel'), { recursive: true });
+        copyFileSync(
+          resolve(__dirname, 'side-panel/side-panel.html'),
+          resolve(__dirname, 'dist/side-panel/side-panel.html')
+        );
+        copyFileSync(
+          resolve(__dirname, 'side-panel/side-panel.css'),
+          resolve(__dirname, 'dist/side-panel/side-panel.css')
         );
         // Copy offscreen html
         mkdirSync(resolve(__dirname, 'dist/offscreen'), { recursive: true });

@@ -17,6 +17,8 @@ wss.on("connection", (ws) => {
 
   // Store session ID per connection for conversation continuity
   let sessionId: string | undefined;
+  // Store page context for this connection
+  let pageContext: string | undefined;
 
   ws.send(JSON.stringify({
     type: "status",
@@ -30,7 +32,26 @@ wss.on("connection", (ws) => {
       const message: ClientMessage = JSON.parse(data.toString());
       console.log(`[Server] Received: ${message.type} (id: ${message.id})`);
 
-      const prompt = buildPrompt(message);
+      // Handle loadpage - store context and acknowledge, don't call agent
+      if (message.type === 'loadpage') {
+        pageContext = buildPageContext(message);
+        console.log(`[Server] Page context stored (${pageContext.length} chars)`);
+
+        ws.send(JSON.stringify({
+          type: 'text',
+          requestId: message.id,
+          content: 'Page context loaded. Ready to talk more about this page.',
+          timestamp: Date.now()
+        }));
+        ws.send(JSON.stringify({
+          type: 'done',
+          requestId: message.id,
+          timestamp: Date.now()
+        }));
+        return;
+      }
+
+      const prompt = buildPrompt(message, pageContext);
 
       if (!prompt) {
         ws.send(JSON.stringify({
@@ -67,14 +88,46 @@ wss.on("connection", (ws) => {
   ws.on("error", (err) => console.error('[Server] WebSocket error:', err));
 });
 
-function buildPrompt(message: ClientMessage): string {
+function buildPageContext(message: ClientMessage): string {
+  const { url, title, content, images, videos } = message.payload;
+  const truncatedContent = content?.substring(0, 15000) || '';
+  const isTruncated = (content?.length || 0) > 15000;
+
+  const parts: string[] = [
+    `URL: ${url}`,
+    `Title: ${title}`,
+    '',
+    `Page Content:\n${truncatedContent}${isTruncated ? '...(truncated)' : ''}`,
+  ];
+
+  if (images && images.length > 0) {
+    parts.push('', `Images (${images.length}):`);
+    images.slice(0, 50).forEach((img, i) => parts.push(`  ${i + 1}. ${img}`));
+    if (images.length > 50) parts.push(`  ... and ${images.length - 50} more`);
+  }
+
+  if (videos && videos.length > 0) {
+    parts.push('', `Videos (${videos.length}):`);
+    videos.forEach((vid, i) => parts.push(`  ${i + 1}. ${vid}`));
+  }
+
+  return parts.join('\n');
+}
+
+function buildPrompt(message: ClientMessage, pageContext?: string): string {
   if (message.type === 'command') {
     const { instruction, context, url, title } = message.payload;
     const parts: string[] = [];
 
-    if (url || title) {
+    // Include stored page context if available
+    if (pageContext) {
+      parts.push('[Page Context]');
+      parts.push(pageContext);
+      parts.push('');
+    } else if (url || title) {
       parts.push(`[Page context: ${title || 'Untitled'} - ${url || 'unknown URL'}]`);
     }
+
     if (context) {
       parts.push(`Context: ${context}`);
     }

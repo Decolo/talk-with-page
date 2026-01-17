@@ -30,6 +30,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
       break;
 
+    case 'getFullPageData':
+      try {
+        // Full page data including media URLs for /loadpage command
+        const fullData = parsePage();
+        console.log('[Content Script] Full page data, images:', fullData.images.length, 'videos:', fullData.videos.length);
+        sendResponse({
+          url: fullData.url,
+          title: fullData.title,
+          content: fullData.textContent,
+          excerpt: fullData.excerpt,
+          byline: fullData.byline,
+          siteName: fullData.siteName,
+          length: fullData.length,
+          images: fullData.images,
+          videos: fullData.videos,
+        });
+      } catch (error) {
+        console.error('[Content Script] Error getting full page data:', error);
+        sendResponse({ error: String(error) });
+      }
+      break;
+
     case 'getRawHTML':
       try {
         const html = document.documentElement.outerHTML;
