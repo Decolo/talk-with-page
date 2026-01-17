@@ -8,9 +8,16 @@
   "scripts": {
     "dev:server": "pnpm --filter @claude-bridge/server dev",
     "dev:extension": "pnpm --filter @claude-bridge/extension dev",
-    "build": "pnpm -r build"
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:watch": "pnpm -r test:watch",
+    "test:ui": "pnpm -r test:ui",
+    "test:coverage": "pnpm -r test:coverage"
   },
   "devDependencies": {
-    "typescript": "^5.7.0"
+    "@vitest/ui": "^4.0.17",
+    "happy-dom": "^20.3.1",
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.17"
   }
 }

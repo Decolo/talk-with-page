@@ -6,10 +6,15 @@
   "scripts": {
     "dev": "vite build --watch",
     "build": "vite build",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@claude-bridge/shared": "workspace:*"
+    "@claude-bridge/shared": "workspace:*",
+    "@mozilla/readability": "^0.6.0"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.270",

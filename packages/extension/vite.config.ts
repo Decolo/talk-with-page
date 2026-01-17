@@ -9,6 +9,7 @@ export default defineConfig({
         'background/service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
         'content/content-script': resolve(__dirname, 'src/content/content-script.ts'),
         'popup/popup': resolve(__dirname, 'src/popup/popup.ts'),
+        'offscreen/offscreen': resolve(__dirname, 'src/offscreen/offscreen.ts'),
       },
       output: {
         entryFileNames: '[name].js',
@@ -36,6 +37,12 @@ export default defineConfig({
         copyFileSync(
           resolve(__dirname, 'popup/popup.css'),
           resolve(__dirname, 'dist/popup/popup.css')
+        );
+        // Copy offscreen html
+        mkdirSync(resolve(__dirname, 'dist/offscreen'), { recursive: true });
+        copyFileSync(
+          resolve(__dirname, 'src/offscreen/offscreen.html'),
+          resolve(__dirname, 'dist/offscreen/offscreen.html')
         );
         // Copy assets
         mkdirSync(resolve(__dirname, 'dist/assets'), { recursive: true });
