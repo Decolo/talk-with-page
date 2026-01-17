@@ -40,15 +40,12 @@ class PopupController {
     // Send button
     document.getElementById('send-btn')!.addEventListener('click', () => this.sendCommand());
 
-    // Pick element buttons
+    // Pick element button
     document.getElementById('pick-element-btn')!.addEventListener('click', () => this.activatePicker());
-    document.getElementById('pick-element-btn-2')!.addEventListener('click', () => this.activatePicker());
 
-    // Page analysis buttons
+    // Page preview buttons
     document.getElementById('preview-page-btn')!.addEventListener('click', () => this.previewPage());
     document.getElementById('preview-raw-btn')!.addEventListener('click', () => this.previewRawHTML());
-    document.getElementById('analyze-page-btn')!.addEventListener('click', () => this.analyzePage());
-    document.getElementById('analyze-selection-btn')!.addEventListener('click', () => this.analyzeSelection());
 
     // Settings buttons
     document.getElementById('clear-history-btn')!.addEventListener('click', () => this.clearHistory());
@@ -185,58 +182,6 @@ ${escapedHTML}${content.length > 5000 ? '...' : ''}
     } catch (error) {
       console.error('[Preview] Error:', error);
       this.pageInfo.innerHTML = `<p style="color: red;">Failed to get raw HTML. Error: ${error}<br><br>Please refresh the page and try again.</p>`;
-    }
-  }
-
-  private async analyzePage(): Promise<void> {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab.id) return;
-
-    try {
-      const content = await chrome.tabs.sendMessage(tab.id, { action: 'getPageContent' });
-
-      const message: ClientMessage = {
-        type: 'page_content',
-        id: `page-${Date.now()}`,
-        timestamp: Date.now(),
-        payload: content,
-      };
-
-      this.addMessage('user', `Analyzing page: ${content.title}`);
-      chrome.runtime.sendMessage({ action: 'sendCommand', payload: message });
-    } catch (error) {
-      this.addMessage('error', 'Failed to get page content. Please refresh the page.');
-    }
-  }
-
-  private async analyzeSelection(): Promise<void> {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab.id) return;
-
-    try {
-      const content = await chrome.tabs.sendMessage(tab.id, { action: 'getPageContent' });
-
-      if (!content.selectedText) {
-        this.addMessage('error', 'No text selected. Please select some text first.');
-        return;
-      }
-
-      const message: ClientMessage = {
-        type: 'page_content',
-        id: `selection-${Date.now()}`,
-        timestamp: Date.now(),
-        payload: {
-          url: content.url,
-          title: content.title,
-          content: content.selectedText,
-          selectedText: content.selectedText,
-        },
-      };
-
-      this.addMessage('user', `Analyzing selection: "${content.selectedText.substring(0, 50)}..."`);
-      chrome.runtime.sendMessage({ action: 'sendCommand', payload: message });
-    } catch (error) {
-      this.addMessage('error', 'Failed to get selection. Please refresh the page.');
     }
   }
 
