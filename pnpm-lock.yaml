@@ -44,10 +44,13 @@ importers:
     dependencies:
       '@anthropic-ai/claude-agent-sdk':
         specifier: latest
-        version: 0.2.11(zod@4.3.5)
+        version: 0.2.20(zod@4.3.5)
       '@claude-bridge/shared':
         specifier: workspace:*
         version: link:../shared
+      commander:
+        specifier: ^14.0.2
+        version: 14.0.2
       dotenv:
         specifier: ^16.4.0
         version: 16.6.1
@@ -72,8 +75,8 @@ importers:
 
 packages:
 
-  '@anthropic-ai/claude-agent-sdk@0.2.11':
-    resolution: {integrity: sha512-50q4vfh57HYTUrwukULp3gvSaOZfRF5zukxhWvW6mmUHuD8+Xwhqn59sZhoDz9ZUw6Um+1lUCgWpJw5/TTMn5w==}
+  '@anthropic-ai/claude-agent-sdk@0.2.20':
+    resolution: {integrity: sha512-Q2rJlYC2hEhJRKcOswJrcvm0O6H/uhXkRPAAqbAlFR/jbCWeg6jpyr9iUmVBFUFOBzAWqT2C6KLHiTJ8NySvQg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       zod: ^4.0.0
@@ -668,6 +671,10 @@ packages:
     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==}
     engines: {node: '>=18'}
 
+  commander@14.0.2:
+    resolution: {integrity: sha512-TywoWNNRbhoD0BXs1P3ZEScW8W5iKrnbithIl0YH+uCmBd0QpPOA8yc82DS3BIE5Ma6FnBVUsJ7wVUDz4dvOWQ==}
+    engines: {node: '>=20'}
+
   dotenv@16.6.1:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
     engines: {node: '>=12'}
@@ -936,7 +943,7 @@ packages:
 
 snapshots:
 
-  '@anthropic-ai/claude-agent-sdk@0.2.11(zod@4.3.5)':
+  '@anthropic-ai/claude-agent-sdk@0.2.20(zod@4.3.5)':
     dependencies:
       zod: 4.3.5
     optionalDependencies:
@@ -1327,6 +1334,8 @@ snapshots:
   assertion-error@2.0.1: {}
 
   chai@6.2.2: {}
+
+  commander@14.0.2: {}
 
   dotenv@16.6.1: {}
 

@@ -3,14 +3,16 @@
 import { WebSocketServer } from "ws";
 import { runAgent } from "./agent.js";
 import type { ClientMessage } from "./types.js";
-import "dotenv/config";
+import { parseCliArgs } from "./cli.js";
+import { loadConfig } from "./config.js";
 
-const PORT = parseInt(process.env.WS_PORT || "9999");
-const HOST = "127.0.0.1";
+// Parse CLI arguments and load configuration
+const cliOptions = parseCliArgs();
+const config = loadConfig(cliOptions);
 
-const wss = new WebSocketServer({ port: PORT, host: HOST });
+const wss = new WebSocketServer({ port: config.port, host: config.host });
 
-console.log(`🌉 Claude Code Bridge running on ws://${HOST}:${PORT}`);
+console.log(`🌉 Claude Code Bridge running on ws://${config.host}:${config.port}`);
 
 wss.on("connection", (ws) => {
   console.log('[Server] Client connected');
@@ -71,7 +73,10 @@ wss.on("connection", (ws) => {
       }));
 
       // Pass session ID for continuity, update with returned ID
-      sessionId = await runAgent(prompt, message.id, ws, sessionId);
+      sessionId = await runAgent(prompt, message.id, ws, {
+        anthropicAuthToken: config.anthropicAuthToken,
+        anthropicBaseUrl: config.anthropicBaseUrl,
+      }, sessionId);
 
     } catch (error) {
       console.error('[Server] Error:', error);

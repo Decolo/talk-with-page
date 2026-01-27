@@ -4,6 +4,9 @@
   "description": "WebSocket server that connects Chrome extensions to Claude AI with file system access",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "talk-with-page": "./dist/index.js"
+  },
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
@@ -13,20 +16,26 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage"
   },
-  "keywords": ["claude", "websocket", "anthropic", "chrome-extension"],
+  "keywords": [
+    "claude",
+    "websocket",
+    "anthropic",
+    "chrome-extension"
+  ],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
-    "@claude-bridge/shared": "workspace:*",
-    "ws": "^8.18.0",
     "@anthropic-ai/claude-agent-sdk": "latest",
-    "dotenv": "^16.4.0"
+    "@claude-bridge/shared": "workspace:*",
+    "commander": "^14.0.2",
+    "dotenv": "^16.4.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@types/ws": "^8.5.0",
     "@types/node": "^22.0.0",
-    "typescript": "^5.7.0",
-    "tsx": "^4.19.0"
+    "@types/ws": "^8.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
   }
 }

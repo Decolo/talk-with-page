@@ -1,20 +1,27 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { WebSocket } from "ws";
 
+export interface AgentConfig {
+  anthropicAuthToken: string;
+  anthropicBaseUrl?: string;
+}
+
 /**
  * Run Claude Agent with streaming responses to WebSocket
  * Based on: https://platform.claude.com/docs/en/agent-sdk/typescript-v2-preview
- *
- * Note: SDK reads API credentials from environment variables:
- * - ANTHROPIC_AUTH_TOKEN or ANTHROPIC_API_KEY
- * - ANTHROPIC_BASE_URL (optional, for custom endpoints)
  */
 export async function runAgent(
   prompt: string,
   requestId: string,
   ws: WebSocket,
+  config: AgentConfig,
   sessionId?: string
 ): Promise<string | undefined> {
+  // Set environment variables for the SDK
+  process.env.ANTHROPIC_AUTH_TOKEN = config.anthropicAuthToken;
+  if (config.anthropicBaseUrl) {
+    process.env.ANTHROPIC_BASE_URL = config.anthropicBaseUrl;
+  }
   let currentSessionId = sessionId;
 
   try {

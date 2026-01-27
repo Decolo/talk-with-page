@@ -61,24 +61,66 @@ cloud-code-reviewer/
 
 ## Quick Start
 
-### 1. Start the Server
+### 1. Install Dependencies
 
 ```bash
-# From project root
-pnpm dev:server
-
-# Server runs on ws://127.0.0.1:9999
+pnpm install
 ```
 
-### 2. Load the Extension
+### 2. Configure API Credentials
+
+**Option A: Use Claude Code settings (Recommended)**
+
+If you have Claude Code installed, the server will automatically use credentials from `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "sk-ant-xxx",
+    "ANTHROPIC_BASE_URL": "https://api.anthropic.com"
+  }
+}
+```
+
+**Option B: Use local .env file**
+
+Create `packages/server/.env`:
+
+```env
+ANTHROPIC_AUTH_TOKEN=sk-ant-xxx
+ANTHROPIC_BASE_URL=https://api.anthropic.com
+WS_PORT=9999
+```
+
+**Option C: Use CLI arguments**
+
+```bash
+talk-with-page --token sk-ant-xxx --base-url https://api.anthropic.com
+```
+
+### 3. Start the Server
+
+```bash
+# Development mode
+pnpm dev:server
+
+# Or build and use CLI
+pnpm --filter @claude-bridge/server build
+npm install -g packages/server
+talk-with-page
+```
+
+Server runs on `ws://127.0.0.1:9999`
+
+### 4. Load the Extension
 
 1. Open Chrome and go to `chrome://extensions/`
 2. Enable "Developer mode" (top right)
 3. Click "Load unpacked"
-4. Select: `/Users/decolo/Github/cloud-code-reviewer/packages/extension/dist`
+4. Select: `/Users/decolo/Github/talk-with-page/packages/extension/dist`
 5. Extension icon appears in toolbar
 
-### 3. Use the Extension
+### 5. Use the Extension
 
 **Chat Tab:**
 - Type commands directly to Claude
@@ -104,6 +146,8 @@ pnpm dev:server
 - ✅ Built-in tools: Bash, Read, Write, Glob, Edit
 - ✅ Streaming responses
 - ✅ Custom API endpoint support
+- ✅ CLI tool with global installation
+- ✅ Configuration priority: CLI > Claude settings > .env > defaults
 
 ### Extension
 - ✅ Manifest V3
@@ -117,6 +161,26 @@ pnpm dev:server
 - ✅ Auto-reconnection
 
 ## Development
+
+### Server CLI
+
+```bash
+# Development mode with hot reload
+pnpm dev:server
+
+# Build
+pnpm --filter @claude-bridge/server build
+
+# Run built version
+node packages/server/dist/index.js
+
+# CLI options
+talk-with-page --help
+talk-with-page --version
+talk-with-page --port 8888
+talk-with-page --token sk-ant-xxx
+talk-with-page --base-url https://custom.api.com
+```
 
 ### Build Extension
 
@@ -136,7 +200,14 @@ pnpm build
 
 ## Environment Variables
 
-Edit `packages/server/.env`:
+The server supports multiple configuration sources with priority:
+
+1. **CLI arguments** (highest priority)
+2. **Claude Code settings** (`~/.claude/settings.json`)
+3. **Local .env file** (`packages/server/.env`)
+4. **Defaults** (lowest priority)
+
+Edit `packages/server/.env` or `~/.claude/settings.json`:
 
 ```env
 ANTHROPIC_AUTH_TOKEN=your_token_here
