@@ -21,6 +21,8 @@ wss.on("connection", (ws) => {
   let sessionId: string | undefined;
   // Store page context for this connection
   let pageContext: string | undefined;
+  // Track current page URL to detect page changes
+  let currentPageUrl: string | undefined;
 
   ws.send(JSON.stringify({
     type: "status",
@@ -34,25 +36,27 @@ wss.on("connection", (ws) => {
       const message: ClientMessage = JSON.parse(data.toString());
       console.log(`[Server] Received: ${message.type} (id: ${message.id})`);
 
-      // Handle loadpage - store context and acknowledge, don't call agent
-      if (message.type === 'loadpage') {
-        pageContext = buildPageContext(message);
-        console.log(`[Server] Page context stored (${pageContext.length} chars)`);
+      // Check if page changed (for command messages with URL)
+      if (message.type === 'command' && message.payload.url) {
+        const pageChanged = currentPageUrl && currentPageUrl !== message.payload.url;
 
-        ws.send(JSON.stringify({
-          type: 'text',
-          requestId: message.id,
-          content: 'Page context loaded. Ready to talk more about this page.',
-          timestamp: Date.now()
-        }));
-        ws.send(JSON.stringify({
-          type: 'done',
-          requestId: message.id,
-          timestamp: Date.now()
-        }));
-        return;
+        if (pageChanged) {
+          // Reset session for new page
+          sessionId = undefined;
+          console.log(`[Server] Page changed: ${currentPageUrl} → ${message.payload.url}`);
+        }
+
+        // Update page context if full data provided
+        if (message.payload.content || message.payload.images || message.payload.videos) {
+          pageContext = buildPageContext(message);
+          currentPageUrl = message.payload.url;
+          console.log(`[Server] Page context updated (${pageContext.length} chars, ${message.payload.images?.length || 0} images, ${message.payload.videos?.length || 0} videos)`);
+        } else {
+          console.log(`[Server] No page content in message (content: ${!!message.payload.content}, images: ${!!message.payload.images}, videos: ${!!message.payload.videos})`);
+        }
       }
 
+      // Build prompt AFTER updating context
       const prompt = buildPrompt(message, pageContext);
 
       if (!prompt) {

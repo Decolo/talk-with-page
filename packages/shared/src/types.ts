@@ -1,6 +1,6 @@
 // Client → Server
 export interface ClientMessage {
-  type: 'command' | 'page_content' | 'element_content' | 'loadpage';
+  type: 'command' | 'page_content' | 'element_content';
   id: string;
   timestamp: number;
   payload: {
@@ -15,7 +15,7 @@ export interface ClientMessage {
     tagName?: string;
     elementType?: 'text' | 'table' | 'list' | 'code';
     structured?: Record<string, unknown>;
-    // Media fields for init command
+    // Media fields (now included in command messages)
     images?: string[];
     videos?: string[];
   };

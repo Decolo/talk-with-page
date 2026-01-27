@@ -5,6 +5,7 @@ class PopupController {
   private commandInput: HTMLTextAreaElement;
   private connectionStatus: HTMLElement;
   private pageInfo: HTMLElement;
+  private lastSentPageUrl: string | null = null;
 
   constructor() {
     this.messageList = document.getElementById('message-list')!;
@@ -34,6 +35,9 @@ class PopupController {
 
     // Focus input
     this.commandInput.focus();
+
+    // Display version info
+    this.displayVersionInfo();
   }
 
   private bindEvents(): void {
@@ -84,24 +88,49 @@ class PopupController {
     const instruction = this.commandInput.value.trim();
     if (!instruction) return;
 
-    // Check for /init command
-    if (instruction.toLowerCase() === '/init') {
-      await this.handleInitCommand();
-      return;
-    }
-
     // Get current tab info for context
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const currentUrl = tab?.url || '';
+
+    // Determine if we need full page data
+    const needsFullPageData = !this.lastSentPageUrl || this.lastSentPageUrl !== currentUrl;
+
+    let payload: any = {
+      instruction,
+      url: currentUrl,
+      title: tab?.title || 'Untitled'
+    };
+
+    // If first command or page changed, include full page data
+    if (needsFullPageData && tab?.id) {
+      try {
+        const pageData = await this.getFullPageData(tab.id);
+        if (pageData && pageData.content) {
+          payload = { ...payload, ...pageData };  // Add content, images, videos
+          this.lastSentPageUrl = currentUrl;
+          console.log('[Popup] Sending full page context:', {
+            url: currentUrl,
+            contentLength: pageData.content?.length || 0,
+            imagesCount: pageData.images?.length || 0,
+            videosCount: pageData.videos?.length || 0
+          });
+        } else {
+          console.warn('[Popup] Page data is empty, sending minimal context');
+        }
+      } catch (error) {
+        console.error('[Popup] Failed to get page data:', error);
+        this.addMessage('status', 'Note: Could not load page content. The page may not allow content scripts.');
+        // Continue with minimal context
+      }
+    } else {
+      console.log('[Popup] Sending minimal context (reusing stored context)');
+    }
 
     const message: ClientMessage = {
       type: 'command',
       id: `popup-${Date.now()}`,
       timestamp: Date.now(),
-      payload: {
-        instruction,
-        url: tab?.url,
-        title: tab?.title,
-      },
+      payload
     };
 
     // Add user message to UI immediately
@@ -112,43 +141,60 @@ class PopupController {
     chrome.runtime.sendMessage({ action: 'sendCommand', payload: message });
   }
 
-  private async handleInitCommand(): Promise<void> {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab.id) {
-      this.addMessage('error', 'No active tab found.');
-      return;
-    }
-
-    this.addMessage('user', '/init');
-    this.commandInput.value = '';
-    this.addMessage('status', 'Initializing page context...');
-
+  private async getFullPageData(tabId: number): Promise<{
+    content: string;
+    images: string[];
+    videos: string[];
+  }> {
+    // First, try to communicate with existing content script
     try {
-      const pageData = await chrome.tabs.sendMessage(tab.id, { action: 'getFullPageData' });
-
-      if (pageData.error) {
-        this.addMessage('error', `Failed to get page data: ${pageData.error}`);
-        return;
-      }
-
-      const message: ClientMessage = {
-        type: 'init',
-        id: `init-${Date.now()}`,
-        timestamp: Date.now(),
-        payload: {
-          url: pageData.url,
-          title: pageData.title,
-          content: pageData.content,
-          images: pageData.images,
-          videos: pageData.videos,
-        },
-      };
-
-      chrome.runtime.sendMessage({ action: 'sendCommand', payload: message });
-      console.log('[Popup] Sent init command with', pageData.images?.length || 0, 'images,', pageData.videos?.length || 0, 'videos');
+      const response = await new Promise<any>((resolve, reject) => {
+        chrome.tabs.sendMessage(tabId, { action: 'getFullPageData' }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else if (response?.error) {
+            reject(new Error(response.error));
+          } else if (!response) {
+            reject(new Error('No response from content script'));
+          } else {
+            resolve(response);
+          }
+        });
+      });
+      return response;
     } catch (error) {
-      console.error('[Popup] Init error:', error);
-      this.addMessage('error', 'Failed to initialize page context. Please refresh the page.');
+      // Content script not responding, inject it programmatically
+      console.log('[Popup] Content script not responding, injecting programmatically...');
+
+      try {
+        // Inject content script
+        await chrome.scripting.executeScript({
+          target: { tabId },
+          files: ['content/content-script.js']
+        });
+
+        // Wait a bit for script to initialize
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Try again
+        const response = await new Promise<any>((resolve, reject) => {
+          chrome.tabs.sendMessage(tabId, { action: 'getFullPageData' }, (response) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+            } else if (response?.error) {
+              reject(new Error(response.error));
+            } else if (!response) {
+              reject(new Error('No response after injection'));
+            } else {
+              resolve(response);
+            }
+          });
+        });
+        return response;
+      } catch (injectionError) {
+        console.error('[Popup] Failed to inject content script:', injectionError);
+        throw new Error('Could not access page content');
+      }
     }
   }
 
@@ -317,6 +363,15 @@ ${escapedHTML}${content.length > 5000 ? '...' : ''}
   private updateConnectionStatus(status: string): void {
     this.connectionStatus.className = `status-indicator ${status}`;
     this.connectionStatus.title = status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  private displayVersionInfo(): void {
+    const versionInfo = document.getElementById('version-info');
+    if (versionInfo) {
+      const buildTime = new Date().toISOString();
+      const manifest = chrome.runtime.getManifest();
+      versionInfo.textContent = `v${manifest.version} • Built: ${buildTime}`;
+    }
   }
 }
 
